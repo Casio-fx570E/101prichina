@@ -3,28 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>101 карточка — zoom + 3D везде</title>
+<title>101 причина любить тебя</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  html, body { min-height: 100%; }
+
   body {
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: #f4f5f7;
-    color: #1a1a2e;
+    color: #f4f5f7;
     padding: 24px;
+
+    /* ===== ФИКСИРОВАННЫЙ ФОН ===== */
     background-image:
-    linear-gradient(rgba(10, 12, 25, .55), rgba(10, 12, 25, .75)),
-    url("101prichina/assets/photo_2026-08-01_21-58-07.jpg");
+      linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.8)),
+      url("assets/Глазки.png");
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
-    background-attachment: fixed; 
+    background-attachment: fixed;
+    background-color: #0a0c19;
   }
 
   h1 {
     text-align: center;
     margin-bottom: 24px;
     font-size: 1.6rem;
+    color: #fff;
+    text-shadow: 0 2px 12px rgba(0,0,0,.6);
   }
 
   /* ================= Сетка ================= */
@@ -34,7 +40,7 @@
     gap: 16px;
     max-width: 1200px;
     margin: 0 auto;
-    perspective: 1000px;      /* 3D-сцена для карточек */
+    perspective: 1000px;
   }
 
   .card {
@@ -44,23 +50,18 @@
     cursor: pointer;
     aspect-ratio: 4 / 5;
     background: #ddd;
-    box-shadow: 0 2px 10px rgba(0,0,0,.12);
+    box-shadow: 0 2px 10px rgba(0,0,0,.35);
     transform-origin: center center;
     will-change: transform;
     z-index: 1;
-
-    /* Плавность: зум/наклон */
     transition:
       transform .25s cubic-bezier(.2,.7,.3,1),
-      box-shadow .25s ease,
-      z-index 0s;
+      box-shadow .25s ease;
   }
 
-  /* При наведении карточка поверх остальных и с более сильной тенью.
-     Сам transform (scale + rotate) выставляется из JS. */
   .card.is-hover {
     z-index: 50;
-    box-shadow: 0 30px 70px rgba(0,0,0,.45);
+    box-shadow: 0 30px 70px rgba(0,0,0,.65);
   }
 
   .card__img {
@@ -71,7 +72,7 @@
     object-fit: cover;
     display: block;
     transition: filter .25s ease;
-    pointer-events: none;     /* чтобы mousemove не «спотыкался» о картинку */
+    pointer-events: none;
   }
 
   .card.is-hover .card__img { filter: brightness(1.06); }
@@ -79,41 +80,61 @@
   .card__overlay {
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-      to top,
-      rgba(0,0,0,.75) 0%,
-      rgba(0,0,0,.25) 45%,
-      rgba(0,0,0,0) 70%
-    );
     pointer-events: none;
+    background: linear-gradient(
+      to bottom,
+      rgba(0,0,0,.35) 0%,
+      rgba(0,0,0,.55) 50%,
+      rgba(0,0,0,.75) 100%
+    );
   }
 
   .card__body {
     position: absolute;
-    left: 0; right: 0; bottom: 0;
-    padding: 12px;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    inset: 0;
+    padding: 14px;
     pointer-events: none;
-    /* выносим текст вперёд по Z — при наклоне будет параллакс */
     transform: translateZ(20px);
   }
 
   .card__num {
-    font-size: .8rem;
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    font-size: .65rem;
     font-weight: 700;
-    opacity: .85;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.85);
+    text-shadow: 0 1px 4px rgba(0,0,0,.8);
+    z-index: 2;
   }
 
   .card__title {
-    font-size: .95rem;
-    font-weight: 700;
-    line-height: 1.2;
+    position: absolute;
+    inset: 0;
+    padding: 32px 14px 14px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.25;
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(0,0,0,.75);
+    letter-spacing: .2px;
   }
 
-  /* Блик на карточке в сетке */
+  .card__title span {
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
   .card__glare {
     position: absolute;
     inset: 0;
@@ -132,7 +153,7 @@
 
   .card.is-hover .card__glare { opacity: 1; }
 
-  /* ================= Модальное окно ================= */
+  /* ================= Модалка ================= */
   .modal {
     position: fixed;
     inset: 0;
@@ -143,6 +164,8 @@
     z-index: 100;
     padding: 16px;
     perspective: 1400px;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
   }
 
   .modal.open { display: flex; }
@@ -161,9 +184,7 @@
     will-change: transform;
   }
 
-  .modal.open .modal__content {
-    animation: pop .25s ease;
-  }
+  .modal.open .modal__content { animation: pop .25s ease; }
 
   @keyframes pop {
     from { opacity: 0; transform: scale(.9); }
@@ -211,48 +232,48 @@
     pointer-events: none;
     background: linear-gradient(
       to top,
-      rgba(0,0,0,.8) 0%,
-      rgba(0,0,0,.15) 50%,
-      rgba(0,0,0,0) 100%
+      rgba(0,0,0,.85) 0%,
+      rgba(0,0,0,.25) 45%,
+      rgba(0,0,0,0) 70%
     );
   }
 
   .modal__caption {
     position: absolute;
     left: 0; right: 0; bottom: 0;
-    padding: 20px;
+    padding: 22px;
     color: #fff;
     z-index: 2;
     transform: translateZ(30px);
   }
 
   .modal__num {
-    font-size: .85rem;
+    font-size: .8rem;
     font-weight: 700;
     opacity: .85;
-    letter-spacing: .5px;
+    letter-spacing: .6px;
+    text-transform: uppercase;
   }
 
   .modal__title {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
     font-weight: 800;
-    margin-top: 4px;
-    line-height: 1.2;
+    margin-top: 6px;
+    line-height: 1.3;
   }
 
   .modal__text {
-    font-size: .9rem;
-    color: #ddd;
-    margin-top: 6px;
+    font-size: .92rem;
+    color: #e0e0e0;
+    margin-top: 10px;
+    line-height: 1.5;
   }
 
   .modal__close {
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 12px; right: 12px;
     z-index: 6;
-    width: 40px;
-    height: 40px;
+    width: 40px; height: 40px;
     border: none;
     background: rgba(0,0,0,.55);
     color: #fff;
@@ -301,24 +322,30 @@
     font-weight: 600;
   }
 
-  /* ================= Мобильные ================= */
   @media (max-width: 480px) {
     body { padding: 12px; }
     .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .modal__title { font-size: 1.2rem; }
+    .modal__title { font-size: 1.1rem; }
+    .modal__text { font-size: .85rem; }
     .nav-btn { padding: 9px 14px; font-size: .85rem; }
     .modal__caption { padding: 16px; transform: none; }
   }
 
-  /* Для тач-устройств отключаем 3D/зум у карточек */
   @media (hover: none) {
-    .card.is-hover { z-index: 1; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+    .card.is-hover { z-index: 1; box-shadow: 0 2px 10px rgba(0,0,0,.35); }
+  }
+
+  @media (max-width: 768px) {
+    body {
+      background-attachment: scroll;
+      background-position: top center;
+    }
   }
 </style>
 </head>
 <body>
 
-<h1>101 карточка — zoom + 3D</h1>
+<h1>101 причина любить тебя ❤️</h1>
 <div class="grid" id="grid"></div>
 
 <!-- Модальное окно -->
@@ -345,191 +372,271 @@
 </div>
 
 <script>
-  const TOTAL = 101;
-  let currentIndex = 0;
+/* =========================================================
+   ДАННЫЕ: 101 объект { reason, img, text }
+   - reason — короткая причина (показывается на карточке)
+   - img    — путь к фото
+   - text   — описание (показывается в модалке)
+   ========================================================= */
+const DATA = [
+  { reason: "За твою улыбку", img: "https://picsum.photos/seed/r1/800/1000", text: "Она делает мой день лучше, даже если он начался не с той ноги." },
+  { reason: "За твои глаза", img: "https://picsum.photos/seed/r2/800/1000", text: "В них я каждый раз нахожу что-то новое." },
+  { reason: "За твой смех", img: "https://picsum.photos/seed/r3/800/1000", text: "Я узнаю его из тысячи и всегда улыбаюсь в ответ." },
+  { reason: "За твою доброту", img: "https://picsum.photos/seed/r4/800/1000", text: "Ты помогаешь людям, даже когда тебя об этом не просят." },
+  { reason: "За твои объятия", img: "https://picsum.photos/seed/r5/800/1000", text: "В них так тепло, что не хочется отпускать." },
+  { reason: "За то, что ты рядом", img: "https://picsum.photos/seed/r6/800/1000", text: "В трудную минуту достаточно, чтобы ты просто был(а) рядом." },
+  { reason: "За твою честность", img: "https://picsum.photos/seed/r7/800/1000", text: "Ты всегда говоришь правду, даже когда это непросто." },
+  { reason: "За твоё чувство юмора", img: "https://picsum.photos/seed/r8/800/1000", text: "С тобой можно смеяться до слёз." },
+  { reason: "За твою заботу", img: "https://picsum.photos/seed/r9/800/1000", text: "Ты замечаешь мелочи, которые для других не видны." },
+  { reason: "За то, как ты слушаешь", img: "https://picsum.photos/seed/r10/800/1000", text: "Ты умеешь слушать не перебивая и слышать между строк." },
+  { reason: "За твою поддержку", img: "https://picsum.photos/seed/r11/800/1000", text: "С тобой я верю, что справлюсь с чем угодно." },
+  { reason: "За твою нежность", img: "https://picsum.photos/seed/r12/800/1000", text: "В каждом твоём движении — забота." },
+  { reason: "За твою искренность", img: "https://picsum.photos/seed/r13/800/1000", text: "С тобой не нужно притворяться." },
+  { reason: "За твою силу духа", img: "https://picsum.photos/seed/r14/800/1000", text: "Ты справляешься с тем, что другим кажется невозможным." },
+  { reason: "За твою мудрость", img: "https://picsum.photos/seed/r15/800/1000", text: "Твои советы всегда попадают в точку." },
+  { reason: "За твою верность", img: "https://picsum.photos/seed/r16/800/1000", text: "Ты — тот человек, на кого можно положиться." },
+  { reason: "За твою любовь к жизни", img: "https://picsum.photos/seed/r17/800/1000", text: "Ты заражаешь оптимизмом всех вокруг." },
+  { reason: "За твою решительность", img: "https://picsum.photos/seed/r18/800/1000", text: "Если ты что-то решил(а) — это обязательно случится." },
+  { reason: "За твою открытость", img: "https://picsum.photos/seed/r19/800/1000", text: "С тобой легко говорить на любые темы." },
+  { reason: "За твою терпеливость", img: "https://picsum.photos/seed/r20/800/1000", text: "Ты умеешь ждать и не торопить события." },
+  { reason: "За то, как ты смотришь", img: "https://picsum.photos/seed/r21/800/1000", text: "В твоём взгляде я вижу всё, что не сказано словами." },
+  { reason: "За твои идеи", img: "https://picsum.photos/seed/r22/800/1000", text: "Ты всегда придумываешь что-то неожиданное." },
+  { reason: "За твои мечты", img: "https://picsum.photos/seed/r23/800/1000", text: "Ты умеешь мечтать так, что хочется мечтать вместе с тобой." },
+  { reason: "За твою заботу о близких", img: "https://picsum.photos/seed/r24/800/1000", text: "Ты всегда помнишь о тех, кто тебе дорог." },
+  { reason: "За твой вкус", img: "https://picsum.photos/seed/r25/800/1000", text: "Во всём — от музыки до мелочей — чувствуется стиль." },
+  { reason: "За твою увлечённость", img: "https://picsum.photos/seed/r26/800/1000", text: "Когда ты рассказываешь о любимом деле, глаза горят." },
+  { reason: "За твою лёгкость", img: "https://picsum.photos/seed/r27/800/1000", text: "С тобой даже скучные дела становятся интересными." },
+  { reason: "За твою щедрость", img: "https://picsum.photos/seed/r28/800/1000", text: "Ты делишься не только вещами, но и теплом." },
+  { reason: "За твою ответственность", img: "https://picsum.photos/seed/r29/800/1000", text: "На тебя всегда можно положиться." },
+  { reason: "За твою заботу обо мне", img: "https://picsum.photos/seed/r30/800/1000", text: "Ты замечаешь, когда мне плохо, раньше, чем я скажу." },
+  { reason: "За твою улыбку по утрам", img: "https://picsum.photos/seed/r31/800/1000", text: "С неё начинается мой день." },
+  { reason: "За твои сообщения", img: "https://picsum.photos/seed/r32/800/1000", text: "«Доброе утро» от тебя — лучшее начало дня." },
+  { reason: "За твои руки", img: "https://picsum.photos/seed/r33/800/1000", text: "В них я чувствую себя в безопасности." },
+  { reason: "За то, как ты поёшь", img: "https://picsum.photos/seed/r34/800/1000", text: "Даже если фальшиво — мне всё равно нравится." },
+  { reason: "За твою любовь к животным", img: "https://picsum.photos/seed/r35/800/1000", text: "Ты умеешь быть добрым(ой) даже к тем, кто не скажет спасибо." },
+  { reason: "За твою увлечённость", img: "https://picsum.photos/seed/r36/800/1000", text: "Я люблю слушать, как ты рассказываешь о том, что тебе дорого." },
+  { reason: "За то, как ты готовишь", img: "https://picsum.photos/seed/r37/800/1000", text: "Даже простой кофе в твоих руках становится особенным." },
+  { reason: "За твою веру в меня", img: "https://picsum.photos/seed/r38/800/1000", text: "Ты видишь во мне лучшее, даже когда я сам(а) этого не вижу." },
+  { reason: "За твою заботу о моих мечтах", img: "https://picsum.photos/seed/r39/800/1000", text: "Ты всегда поддерживаешь мои планы." },
+  { reason: "За твою ласку", img: "https://picsum.photos/seed/r40/800/1000", text: "В каждом жесте — тепло." },
+  { reason: "За твою заботу о нашем будущем", img: "https://picsum.photos/seed/r41/800/1000", text: "Ты думаешь о нас на годы вперёд." },
+  { reason: "За твою заботу о родителях", img: "https://picsum.photos/seed/r42/800/1000", text: "Ты не забываешь о тех, кто тебя вырастил." },
+  { reason: "За твою заботу о друзьях", img: "https://picsum.photos/seed/r43/800/1000", text: "Ты всегда рядом, когда нужна помощь." },
+  { reason: "За то, как ты держишь меня за руку", img: "https://picsum.photos/seed/r44/800/1000", text: "В этом жесте больше слов, чем в любом признании." },
+  { reason: "За твою доброту без причины", img: "https://picsum.photos/seed/r45/800/1000", text: "Ты делаешь хорошее просто так." },
+  { reason: "За то, что ты не бросаешь слов на ветер", img: "https://picsum.photos/seed/r46/800/1000", text: "Если пообещал(а) — сделаешь." },
+  { reason: "За твою заботу о моём настроении", img: "https://picsum.photos/seed/r47/800/1000", text: "Ты замечаешь, когда мне грустно, и умеешь подбодрить." },
+  { reason: "За твою способность прощать", img: "https://picsum.photos/seed/r48/800/1000", text: "Ты умеешь отпускать обиды." },
+  { reason: "За твою любовь к приключениям", img: "https://picsum.photos/seed/r49/800/1000", text: "С тобой даже обычная прогулка становится путешествием." },
+  { reason: "За твою манеру говорить «люблю»", img: "https://picsum.photos/seed/r50/800/1000", text: "В твоих словах — целый мир." },
+  { reason: "За твою заботу о моём сне", img: "https://picsum.photos/seed/r51/800/1000", text: "Ты умеешь создать уют, в котором спится спокойно." },
+  { reason: "За твою улыбку сквозь слёзы", img: "https://picsum.photos/seed/r52/800/1000", text: "Ты находишь силы улыбаться даже в трудные моменты." },
+  { reason: "За то, что ты не сдаёшься", img: "https://picsum.photos/seed/r53/800/1000", text: "Ты идёшь вперёд, даже когда трудно." },
+  { reason: "За твою веру в добро", img: "https://picsum.photos/seed/r54/800/1000", text: "Ты видишь хорошее в людях и в мире." },
+  { reason: "За то, как ты радуешься мелочам", img: "https://picsum.photos/seed/r55/800/1000", text: "В твоих глазах даже маленькое событие становится праздником." },
+  { reason: "За твою заботу о моих планах", img: "https://picsum.photos/seed/r56/800/1000", text: "Ты помогаешь мне двигаться к цели." },
+  { reason: "За то, как ты гордишься мной", img: "https://picsum.photos/seed/r57/800/1000", text: "В твоих глазах я чувствую себя победителем." },
+  { reason: "За твою честность в трудные моменты", img: "https://picsum.photos/seed/r58/800/1000", text: "Ты говоришь правду, даже когда это тяжело." },
+  { reason: "За то, что ты умеешь утешить", img: "https://picsum.photos/seed/r59/800/1000", text: "В твоих объятиях боль становится меньше." },
+  { reason: "За твою заботу о нашем доме", img: "https://picsum.photos/seed/r60/800/1000", text: "С тобой любое место становится домом." },
+  { reason: "За твою увлечённость деталями", img: "https://picsum.photos/seed/r61/800/1000", text: "Ты замечаешь то, что другие пропускают." },
+  { reason: "За то, что ты умеешь удивлять", img: "https://picsum.photos/seed/r62/800/1000", text: "Даже спустя время ты продолжаешь удивлять." },
+  { reason: "За твою искренность в мелочах", img: "https://picsum.photos/seed/r63/800/1000", text: "Ты не играешь, а живёшь по-настоящему." },
+  { reason: "За твою заботу о моих близких", img: "https://picsum.photos/seed/r64/800/1000", text: "Ты принимаешь их как своих." },
+  { reason: "За твою способность вдохновлять", img: "https://picsum.photos/seed/r65/800/1000", text: "С тобой хочется быть лучше." },
+  { reason: "За то, что ты умеешь ценить время", img: "https://picsum.photos/seed/r66/800/1000", text: "Ты не тратишь его впустую." },
+  { reason: "За твою заботу о моих увлечениях", img: "https://picsum.photos/seed/r67/800/1000", text: "Ты интересуешься тем, что мне дорого." },
+  { reason: "За твою уверенность", img: "https://picsum.photos/seed/r68/800/1000", text: "В твоей уверенности я черпаю силы." },
+  { reason: "За то, как ты встречаешь меня улыбкой", img: "https://picsum.photos/seed/r69/800/1000", text: "Одна твоя улыбка — и усталость как рукой снимает." },
+  { reason: "За твою заботу о моих слабостях", img: "https://picsum.photos/seed/r70/800/1000", text: "Ты принимаешь меня таким(ой), какой(ая) я есть." },
+  { reason: "За твою мудрость в решениях", img: "https://picsum.photos/seed/r71/800/1000", text: "Ты умеешь видеть главное." },
+  { reason: "За твою способность удивлять каждый день", img: "https://picsum.photos/seed/r72/800/1000", text: "С тобой не бывает скучно." },
+  { reason: "За твою открытость к новому", img: "https://picsum.photos/seed/r73/800/1000", text: "Ты не боишься пробовать." },
+  { reason: "За твою заботу о моём настроении утром", img: "https://picsum.photos/seed/r74/800/1000", text: "Ты знаешь, как сделать утро добрым." },
+  { reason: "За твою готовность помочь", img: "https://picsum.photos/seed/r75/800/1000", text: "Ты всегда готов(а) прийти на помощь." },
+  { reason: "За то, как ты смотришь на закат", img: "https://picsum.photos/seed/r76/800/1000", text: "В такие моменты я вижу тебя настоящим(ей)." },
+  { reason: "За твою любовь к путешествиям", img: "https://picsum.photos/seed/r77/800/1000", text: "С тобой каждый новый город становится особенным." },
+  { reason: "За твою заботу о моих друзьях", img: "https://picsum.photos/seed/r78/800/1000", text: "Ты принимаешь их как часть моей жизни." },
+  { reason: "За то, что ты умеешь молчать вместе со мной", img: "https://picsum.photos/seed/r79/800/1000", text: "Иногда тишина с тобой — лучше любых слов." },
+  { reason: "За твою нежность в словах", img: "https://picsum.photos/seed/r80/800/1000", text: "В каждом слове — тепло." },
+  { reason: "За твою способность удивлять мелочами", img: "https://picsum.photos/seed/r81/800/1000", text: "Ты умеешь делать обычное волшебным." },
+  { reason: "За твою уверенность в нас", img: "https://picsum.photos/seed/r82/800/1000", text: "Ты веришь в нас даже в трудные времена." },
+  { reason: "За то, как ты встречаешь меня после работы", img: "https://picsum.photos/seed/r83/800/1000", text: "Твой взгляд снимает всю усталость дня." },
+  { reason: "За твою любовь к музыке", img: "https://picsum.photos/seed/r84/800/1000", text: "У нас всегда есть о чём поговорить." },
+  { reason: "За твою заботу о моих планах на будущее", img: "https://picsum.photos/seed/r85/800/1000", text: "Ты помогаешь мне строить мечты." },
+  { reason: "За твою улыбку в трудные дни", img: "https://picsum.photos/seed/r86/800/1000", text: "Она даёт мне силы идти дальше." },
+  { reason: "За твою заботу о нашем уюте", img: "https://picsum.photos/seed/r87/800/1000", text: "С тобой дом становится тёплым." },
+  { reason: "За твою способность вдохновлять на большее", img: "https://picsum.photos/seed/r88/800/1000", text: "С тобой хочется мечтать смелее." },
+  { reason: "За то, как ты держишь меня за руку в кино", img: "https://picsum.photos/seed/r89/800/1000", text: "В такие моменты я чувствую себя самым счастливым(ой)." },
+  { reason: "За твою заботу о моих увлечениях", img: "https://picsum.photos/seed/r90/800/1000", text: "Ты не мешаешь, а поддерживаешь." },
+  { reason: "За твою честность в чувствах", img: "https://picsum.photos/seed/r91/800/1000", text: "Ты не боишься говорить о главном." },
+  { reason: "За твою доброту к незнакомым", img: "https://picsum.photos/seed/r92/800/1000", text: "Ты помогаешь даже тем, кого не знаешь." },
+  { reason: "За то, что ты всегда рядом в трудные дни", img: "https://picsum.photos/seed/r93/800/1000", text: "Ты — моя опора." },
+  { reason: "За твою заботу о моих увлечениях и мечтах", img: "https://picsum.photos/seed/r94/800/1000", text: "Ты всегда поддерживаешь меня." },
+  { reason: "За твою заботу о моём будущем", img: "https://picsum.photos/seed/r95/800/1000", text: "Ты думаешь о нас на годы вперёд." },
+  { reason: "За то, что ты умеешь просить прощения", img: "https://picsum.photos/seed/r96/800/1000", text: "Это требует силы, и у тебя она есть." },
+  { reason: "За твою заботу о моих увлечениях", img: "https://picsum.photos/seed/r97/800/1000", text: "Ты всегда интересуешься тем, что мне дорого." },
+  { reason: "За твою улыбку, которая спасает", img: "https://picsum.photos/seed/r98/800/1000", text: "В самые трудные дни она возвращает меня к жизни." },
+  { reason: "За твою заботу обо мне каждый день", img: "https://picsum.photos/seed/r99/800/1000", text: "Ты делаешь"}
+];
 
-  const grid         = document.getElementById('grid');
-  const modal        = document.getElementById('modal');
-  const modalContent = document.getElementById('modalContent');
-  const modalGlare   = document.getElementById('modalGlare');
-  const modalImg     = document.getElementById('modalImg');
-  const modalNum     = document.getElementById('modalNum');
-  const modalTitle   = document.getElementById('modalTitle');
-  const modalText    = document.getElementById('modalText');
-  const modalCounter = document.getElementById('modalCounter');
-  const prevBtn      = document.getElementById('prevBtn');
-  const nextBtn      = document.getElementById('nextBtn');
-  const closeBtn     = document.getElementById('closeBtn');
+/* =========================================================
+   ДАЛЬШЕ — ЛОГИКА (не трогаем)
+   ========================================================= */
+const TOTAL = DATA.length;
+let currentIndex = 0;
 
-  /* ============ Данные ============ */
-  const PHOTOS = [
-    "https://picsum.photos/id/1015/800/1000",
-    "https://picsum.photos/id/1016/800/1000",
-    "https://picsum.photos/id/1018/800/1000",
-  ];
-  const photoFor = i => PHOTOS[i] || `https://picsum.photos/seed/card${i}/800/1000`;
-  const getCardData = i => ({
-    num: i + 1,
-    title: `Карточка №${i + 1}`,
-    text: `Описание карточки номер ${i + 1}.`,
-    img: photoFor(i)
+const grid         = document.getElementById('grid');
+const modal        = document.getElementById('modal');
+const modalContent = document.getElementById('modalContent');
+const modalGlare   = document.getElementById('modalGlare');
+const modalImg     = document.getElementById('modalImg');
+const modalNum     = document.getElementById('modalNum');
+const modalTitle   = document.getElementById('modalTitle');
+const modalText    = document.getElementById('modalText');
+const modalCounter = document.getElementById('modalCounter');
+const prevBtn      = document.getElementById('prevBtn');
+const nextBtn      = document.getElementById('nextBtn');
+const closeBtn     = document.getElementById('closeBtn');
+
+function buildGrid() {
+  const fragment = document.createDocumentFragment();
+  DATA.forEach((d, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.dataset.index = i;
+    card.innerHTML = `
+      <img class="card__img" src="${d.img}" alt="${d.reason}" loading="lazy" decoding="async">
+      <div class="card__overlay"></div>
+      <div class="card__glare"></div>
+      <div class="card__body">
+        <div class="card__num">Причина №${i + 1}</div>
+        <div class="card__title">${d.reason}</div>
+      </div>
+    `;
+    card.addEventListener('click', () => openModal(i));
+    fragment.appendChild(card);
+  });
+  grid.appendChild(fragment);
+}
+
+/* ==== 3D-наклон карточек ==== */
+const HOVER_SCALE = 2.0;
+const TILT_CARD   = 12;
+
+function bindCardTilt(card) {
+  const glare = card.querySelector('.card__glare');
+
+  card.addEventListener('mouseenter', () => {
+    card.classList.add('is-hover');
+    card.style.transition = 'transform .15s cubic-bezier(.2,.7,.3,1), box-shadow .25s ease';
   });
 
-  /* ============ Сетка ============ */
-  function buildGrid() {
-    const fragment = document.createDocumentFragment();
-    for (let i = 0; i < TOTAL; i++) {
-      const d = getCardData(i);
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.dataset.index = i;
-      card.innerHTML = `
-        <img class="card__img" src="${d.img}" alt="${d.title}" loading="lazy" decoding="async">
-        <div class="card__overlay"></div>
-        <div class="card__glare"></div>
-        <div class="card__body">
-          <div class="card__num">№${d.num}</div>
-          <div class="card__title">${d.title}</div>
-        </div>
-      `;
-      card.addEventListener('click', () => openModal(i));
-      fragment.appendChild(card);
-    }
-    grid.appendChild(fragment);
-  }
-
-  /* =====================================================
-     3D-НАКЛОН НА КАРТОЧКАХ СЕТКИ
-     ===================================================== */
-  const HOVER_SCALE = 2.0;    // зум при наведении
-  const TILT_CARD   = 12;     // макс. угол наклона карточки, °
-
-  // Навешиваем обработчики на все карточки (делегирование не подходит,
-  // т.к. для наклона нужны индивидуальные координаты)
-  function bindCardTilt(card) {
-    const glare = card.querySelector('.card__glare');
-
-    card.addEventListener('mouseenter', () => {
-      card.classList.add('is-hover');
-      // включаем will-change, чтобы анимация была супер-плавной
-      card.style.transition = 'transform .15s cubic-bezier(.2,.7,.3,1), box-shadow .25s ease';
-    });
-
-    card.addEventListener('mousemove', e => {
-      const rect = card.getBoundingClientRect();
-      const px = (e.clientX - rect.left) / rect.width;   // 0..1
-      const py = (e.clientY - rect.top)  / rect.height;  // 0..1
-
-      // Мышь справа -> rotateY отрицательный; мышь сверху -> rotateX положительный
-      const rotateY = (0.5 - px) * TILT_CARD * 2;
-      const rotateX = (py - 0.5) * TILT_CARD * 2;
-
-      // ВАЖНО: scale и rotate в одном transform — карточка зумится и наклоняется
-      card.style.transform =
-        `scale(${HOVER_SCALE}) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
-
-      // Блик ездит за мышью
-      glare.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
-      glare.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
-    });
-
-    card.addEventListener('mouseleave', () => {
-      card.classList.remove('is-hover');
-      // Плавно возвращаем к исходному состоянию с той же кривой
-      card.style.transition = 'transform .3s cubic-bezier(.2,.7,.3,1), box-shadow .25s ease';
-      card.style.transform = 'scale(1) rotateX(0deg) rotateY(0deg)';
-      glare.style.setProperty('--gx', '50%');
-      glare.style.setProperty('--gy', '50%');
-    });
-  }
-
-  /* ============ Модалка ============ */
-  function openModal(index) {
-    currentIndex = index;
-    renderModal();
-    resetTilt();
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function renderModal() {
-    const d = getCardData(currentIndex);
-    modalImg.src = d.img;
-    modalImg.alt = d.title;
-    modalNum.textContent    = `№${d.num}`;
-    modalTitle.textContent  = d.title;
-    modalText.textContent   = d.text;
-    modalCounter.textContent= `${currentIndex + 1} / ${TOTAL}`;
-    prevBtn.disabled = currentIndex === 0;
-    nextBtn.disabled = currentIndex === TOTAL - 1;
-  }
-
-  function closeModal() {
-    modal.classList.remove('open');
-    document.body.style.overflow = '';
-    resetTilt();
-  }
-
-  function next() { if (currentIndex < TOTAL - 1) { currentIndex++; renderModal(); } }
-  function prev() { if (currentIndex > 0)        { currentIndex--; renderModal(); } }
-
-  /* ============ 3D TILT В МОДАЛКЕ ============ */
-  const MAX_TILT = 14;
-
-  function resetTilt() {
-    modalContent.style.transform = 'rotateX(0deg) rotateY(0deg)';
-    modalGlare.style.setProperty('--gx', '50%');
-    modalGlare.style.setProperty('--gy', '50%');
-  }
-
-  function handleModalTilt(e) {
-    if (!modal.classList.contains('open')) return;
-
-    const rect = modalContent.getBoundingClientRect();
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
     const px = (e.clientX - rect.left) / rect.width;
     const py = (e.clientY - rect.top)  / rect.height;
 
-    if (px < -0.5 || px > 1.5 || py < -0.5 || py > 1.5) { resetTilt(); return; }
+    const rotateY = (0.5 - px) * TILT_CARD * 2;
+    const rotateX = (py - 0.5) * TILT_CARD * 2;
 
-    const rotateY = (0.5 - px) * MAX_TILT * 2;
-    const rotateX = (py - 0.5) * MAX_TILT * 2;
+    card.style.transform =
+      `scale(${HOVER_SCALE}) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
 
-    modalContent.style.transform =
-      `rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
-
-    modalGlare.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
-    modalGlare.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
-  }
-
-  document.addEventListener('mousemove', handleModalTilt);
-  document.addEventListener('mouseleave', resetTilt);
-
-  /* ============ События ============ */
-  closeBtn.addEventListener('click', closeModal);
-  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-  nextBtn.addEventListener('click', next);
-  prevBtn.addEventListener('click', prev);
-
-  document.addEventListener('keydown', e => {
-    if (!modal.classList.contains('open')) return;
-    if (e.key === 'Escape')     closeModal();
-    if (e.key === 'ArrowRight') next();
-    if (e.key === 'ArrowLeft')  prev();
+    glare.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+    glare.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
   });
 
-  /* ============ Свайпы (тач) ============ */
-  let touchStartX = 0;
-  modalContent.addEventListener('touchstart', e => {
-    touchStartX = e.changedTouches[0].clientX;
-  }, { passive: true });
-  modalContent.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - touchStartX;
-    if (Math.abs(dx) > 50) dx < 0 ? next() : prev();
-  }, { passive: true });
+  card.addEventListener('mouseleave', () => {
+    card.classList.remove('is-hover');
+    card.style.transition = 'transform .3s cubic-bezier(.2,.7,.3,1), box-shadow .25s ease';
+    card.style.transform = 'scale(1) rotateX(0deg) rotateY(0deg)';
+    glare.style.setProperty('--gx', '50%');
+    glare.style.setProperty('--gy', '50%');
+  });
+}
 
-  /* ============ Запуск ============ */
-  buildGrid();
-  document.querySelectorAll('.card').forEach(bindCardTilt);
+/* ==== Модалка ==== */
+function openModal(index) {
+  currentIndex = index;
+  renderModal();
+  resetTilt();
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function renderModal() {
+  const d = DATA[currentIndex];
+  modalImg.src          = d.img;
+  modalImg.alt          = d.reason;
+  modalNum.textContent  = `Причина №${currentIndex + 1}`;
+  modalTitle.textContent= d.reason;
+  modalText.textContent = d.text;
+  modalCounter.textContent = `${currentIndex + 1} / ${TOTAL}`;
+  prevBtn.disabled = currentIndex === 0;
+  nextBtn.disabled = currentIndex === TOTAL - 1;
+}
+
+function closeModal() {
+  modal.classList.remove('open');
+  document.body.style.overflow = '';
+  resetTilt();
+}
+
+function next() { if (currentIndex < TOTAL - 1) { currentIndex++; renderModal(); } }
+function prev() { if (currentIndex > 0)        { currentIndex--; renderModal(); } }
+
+/* ==== 3D-наклон в модалке ==== */
+const MAX_TILT = 14;
+
+function resetTilt() {
+  modalContent.style.transform = 'rotateX(0deg) rotateY(0deg)';
+  modalGlare.style.setProperty('--gx', '50%');
+  modalGlare.style.setProperty('--gy', '50%');
+}
+
+function handleModalTilt(e) {
+  if (!modal.classList.contains('open')) return;
+  const rect = modalContent.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width;
+  const py = (e.clientY - rect.top)  / rect.height;
+  if (px < -0.5 || px > 1.5 || py < -0.5 || py > 1.5) { resetTilt(); return; }
+
+  const rotateY = (0.5 - px) * MAX_TILT * 2;
+  const rotateX = (py - 0.5) * MAX_TILT * 2;
+  modalContent.style.transform =
+    `rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+
+  modalGlare.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+  modalGlare.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+}
+
+document.addEventListener('mousemove', handleModalTilt);
+document.addEventListener('mouseleave', resetTilt);
+
+closeBtn.addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+nextBtn.addEventListener('click', next);
+prevBtn.addEventListener('click', prev);
+
+document.addEventListener('keydown', e => {
+  if (!modal.classList.contains('open')) return;
+  if (e.key === 'Escape')     closeModal();
+  if (e.key === 'ArrowRight') next();
+  if (e.key === 'ArrowLeft')  prev();
+});
+
+let touchStartX = 0;
+modalContent.addEventListener('touchstart', e => {
+  touchStartX = e.changedTouches[0].clientX;
+}, { passive: true });
+modalContent.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 50) dx < 0 ? next() : prev();
+}, { passive: true });
+
+buildGrid();
+document.querySelectorAll('.card').forEach(bindCardTilt);
 </script>
 </body>
 </html>
