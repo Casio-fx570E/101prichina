@@ -14,7 +14,6 @@
     color: #f4f5f7;
     padding: 24px;
 
-    /* ===== ФИКСИРОВАННЫЙ ФОН ===== */
     background-image:
       linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.8)),
       url("assets/Глазки.png");
@@ -49,19 +48,24 @@
     overflow: hidden;
     cursor: pointer;
     aspect-ratio: 4 / 5;
-    background: #ddd;
-    box-shadow: 0 2px 10px rgba(0,0,0,.35);
+    background: rgba(255, 255, 255, .08);
+    border: 1px solid rgba(255, 255, 255, .18);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    box-shadow: 0 2px 10px rgba(0,0,0,.25);
     transform-origin: center center;
     will-change: transform;
     z-index: 1;
     transition:
       transform .25s cubic-bezier(.2,.7,.3,1),
-      box-shadow .25s ease;
+      box-shadow .25s ease,
+      background .25s ease;
   }
 
   .card.is-hover {
     z-index: 50;
-    box-shadow: 0 30px 70px rgba(0,0,0,.65);
+    background: rgba(255, 255, 255, .14);
+    box-shadow: 0 30px 70px rgba(0,0,0,.55);
   }
 
   .card__img {
@@ -71,11 +75,15 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: filter .25s ease;
     pointer-events: none;
+    opacity: .55;
+    transition: opacity .25s ease, filter .25s ease;
   }
 
-  .card.is-hover .card__img { filter: brightness(1.06); }
+  .card.is-hover .card__img {
+    opacity: .95;
+    filter: brightness(1.05);
+  }
 
   .card__overlay {
     position: absolute;
@@ -83,9 +91,8 @@
     pointer-events: none;
     background: linear-gradient(
       to bottom,
-      rgba(0,0,0,.35) 0%,
-      rgba(0,0,0,.55) 50%,
-      rgba(0,0,0,.75) 100%
+      rgba(0,0,0,.15) 0%,
+      rgba(0,0,0,.35) 100%
     );
   }
 
@@ -105,8 +112,8 @@
     font-weight: 700;
     letter-spacing: .6px;
     text-transform: uppercase;
-    color: rgba(255,255,255,.85);
-    text-shadow: 0 1px 4px rgba(0,0,0,.8);
+    color: rgba(255,255,255,.9);
+    text-shadow: 0 1px 4px rgba(0,0,0,.9);
     z-index: 2;
   }
 
@@ -114,17 +121,17 @@
     position: absolute;
     inset: 0;
     padding: 32px 14px 14px;
-
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-
     font-size: 1rem;
     font-weight: 800;
     line-height: 1.25;
     color: #fff;
-    text-shadow: 0 2px 10px rgba(0,0,0,.75);
+    text-shadow:
+      0 1px 2px rgba(0,0,0,.9),
+      0 2px 10px rgba(0,0,0,.7);
     letter-spacing: .2px;
   }
 
@@ -322,6 +329,189 @@
     font-weight: 600;
   }
 
+  /* =========================================================
+     ПРЕЛОАДЕРЫ И ЭКРАН ВХОДА
+     ========================================================= */
+  .screen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 50% 40%, #1a1030 0%, #0a0616 70%);
+    transition: opacity .5s ease, visibility .5s ease;
+  }
+
+  .screen.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .screen__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .preloader .screen__canvas {
+    width: 220px;
+    height: 220px;
+    inset: auto;
+    position: relative;
+  }
+
+  .preloader__label {
+    position: absolute;
+    bottom: 38%;
+    left: 0; right: 0;
+    text-align: center;
+    color: #fff;
+    font-size: .9rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .8;
+    animation: fadeInOut 1.8s ease-in-out infinite;
+  }
+
+  @keyframes fadeInOut {
+    0%, 100% { opacity: .35; }
+    50%      { opacity: .9; }
+  }
+
+  .login {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 360px;
+    padding: 32px 26px 28px;
+    border-radius: 20px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.15);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    animation: loginIn .5s cubic-bezier(.2,.7,.3,1);
+  }
+
+  @keyframes loginIn {
+    from { opacity: 0; transform: translateY(20px) scale(.96); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .login__title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    text-align: center;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .login__subtitle {
+    text-align: center;
+    font-size: .82rem;
+    color: rgba(255,255,255,.65);
+    margin-bottom: 10px;
+  }
+
+  .login__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .login__label {
+    font-size: .75rem;
+    color: rgba(255,255,255,.7);
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+
+  .login__input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,.18);
+    background: rgba(0,0,0,.35);
+    color: #fff;
+    font-size: .95rem;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+
+  .login__input:focus {
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168,85,247,.25);
+  }
+
+  .login__btn {
+    margin-top: 6px;
+    padding: 13px 18px;
+    border: none;
+    border-radius: 10px;
+    font-size: .95rem;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(135deg, #ec4899, #a855f7);
+    box-shadow: 0 8px 24px rgba(236,72,153,.35);
+    transition: transform .12s, box-shadow .2s, opacity .2s;
+  }
+
+  .login__btn:hover { transform: translateY(-1px); box-shadow: 0 12px 28px rgba(236,72,153,.5); }
+  .login__btn:active { transform: scale(.98); }
+  .login__btn:disabled { opacity: .6; cursor: default; }
+
+  .login__error {
+    min-height: 18px;
+    font-size: .8rem;
+    color: #ff6b6b;
+    text-align: center;
+    opacity: 0;
+    transition: opacity .2s;
+  }
+
+  .login__error.show { opacity: 1; }
+
+  .main-content {
+    opacity: 0;
+    transition: opacity .6s ease;
+  }
+  .main-content.visible { opacity: 1; }
+
+  /* Кнопка звука */
+  .sound-toggle {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 900;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.25);
+    background: rgba(0,0,0,.55);
+    color: #fff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background .2s, transform .15s, opacity .2s;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sound-toggle.visible { display: flex; }
+  .sound-toggle:hover { background: rgba(0,0,0,.8); transform: scale(1.08); }
+  .sound-toggle.muted { opacity: .6; }
+
+  /* ================= Мобильная сетка ================= */
   @media (max-width: 640px) {
     body {
       padding: 10px;
@@ -329,25 +519,32 @@
       background-position: top center;
     }
 
-    h1 {
-      font-size: 1.1rem;
-      margin-bottom: 14px;
-    }
+    h1 { font-size: 1.1rem; margin-bottom: 14px; }
 
     .grid {
-      /* плотная сетка: минимум 72px, максимум сколько влезет */
       grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
       gap: 6px;
     }
 
     .card {
       border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,.4);
+      background: rgba(255, 255, 255, .07);
+      border: 1px solid rgba(255, 255, 255, .15);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+
+    .card__img { opacity: .5; }
+
+    .card.is-hover {
+      z-index: 1;
+      background: rgba(255, 255, 255, .07);
+      box-shadow: 0 1px 4px rgba(0,0,0,.3);
     }
 
     .card__body { padding: 6px; }
 
-    /* номер ещё мельче */
     .card__num {
       top: 4px;
       left: 5px;
@@ -356,7 +553,6 @@
       opacity: .9;
     }
 
-    /* причина — очень мелкая, по центру */
     .card__title {
       padding: 14px 5px 5px;
       font-size: .55rem;
@@ -364,28 +560,19 @@
       font-weight: 700;
     }
 
-    .card__title span {
-      -webkit-line-clamp: 4;   /* на маленькой карточке больше не влезет */
-    }
+    .card__title span { -webkit-line-clamp: 4; }
 
-    /* затемнение послабее, чтобы фон «дышал» и фото было видно */
     .card__overlay {
       background: linear-gradient(
         to bottom,
-        rgba(0,0,0,.30) 0%,
-        rgba(0,0,0,.50) 100%
+        rgba(0,0,0,.10) 0%,
+        rgba(0,0,0,.30) 100%
       );
-    }
-
-    /* на тач 3D/зум не нужны */
-    .card.is-hover {
-      z-index: 1;
-      box-shadow: 0 1px 4px rgba(0,0,0,.4);
     }
   }
 
   @media (hover: none) {
-    .card.is-hover { z-index: 1; box-shadow: 0 2px 10px rgba(0,0,0,.35); }
+    .card.is-hover { z-index: 1; }
   }
 
   @media (max-width: 768px) {
@@ -398,10 +585,57 @@
 </head>
 <body>
 
-<h1>101 причина любить тебя ❤️</h1>
-<div class="grid" id="grid"></div>
+<!-- Фоновая музыка -->
+<audio id="bgMusic" loop preload="auto">
+  <source src="assets/101prichina.mp3" type="audio/mpeg">
+</audio>
 
-<!-- Модальное окно -->
+<!-- Кнопка звука -->
+<button class="sound-toggle" id="soundToggle" aria-label="Выключить звук" title="Выключить звук">🔊</button>
+
+<!-- ===== 1. Стартовый прелоадер ===== -->
+<div class="screen preloader" id="preloaderStart">
+  <canvas class="screen__canvas" id="preCanvasStart"></canvas>
+  <div class="preloader__label">Загрузка…</div>
+</div>
+
+<!-- ===== 2. Экран входа ===== -->
+<div class="screen" id="loginScreen">
+  <canvas class="screen__canvas" id="preCanvasLogin"></canvas>
+
+  <form class="login" id="loginForm" autocomplete="off">
+    <div class="login__title">Вход</div>
+    <div class="login__subtitle">Введите логин и пароль</div>
+
+    <div class="login__field">
+      <label class="login__label" for="loginUser">Логин</label>
+      <input class="login__input" id="loginUser" type="text" placeholder="Ваш логин" required>
+    </div>
+
+    <div class="login__field">
+      <label class="login__label" for="loginPass">Пароль</label>
+      <input class="login__input" id="loginPass" type="password" placeholder="Пароль" required>
+    </div>
+
+    <div class="login__error" id="loginError"></div>
+
+    <button class="login__btn" type="submit">Войти</button>
+  </form>
+</div>
+
+<!-- ===== 3. Прелоадер после входа ===== -->
+<div class="screen preloader hidden" id="preloaderAfter">
+  <canvas class="screen__canvas" id="preCanvasAfter"></canvas>
+  <div class="preloader__label">Очень сильна тебя люблююю, Утя</div>
+</div>
+
+<!-- ===== 4. Главный контент ===== -->
+<main class="main-content" id="mainContent">
+  <h1>101 причина любить тебя ❤️</h1>
+  <div class="grid" id="grid"></div>
+</main>
+
+<!-- ===== Модальное окно ===== -->
 <div class="modal" id="modal">
   <div class="modal__content" id="modalContent">
     <div class="modal__glare" id="modalGlare"></div>
@@ -427,9 +661,6 @@
 <script>
 /* =========================================================
    ДАННЫЕ: 101 объект { reason, img, text }
-   - reason — короткая причина (показывается на карточке)
-   - img    — путь к фото
-   - text   — описание (показывается в модалке)
    ========================================================= */
 const DATA = [
   { reason: "За твою улыбку", img: "assets/Без имени-1.png", text: "Она делает мой день лучше, даже если он начался не с той ноги." },
@@ -530,11 +761,13 @@ const DATA = [
   { reason: "За то, что ты умеешь просить прощения", img: "https://picsum.photos/seed/r96/800/1000", text: "Это требует силы, и у тебя она есть." },
   { reason: "За твою заботу о моих увлечениях", img: "https://picsum.photos/seed/r97/800/1000", text: "Ты всегда интересуешься тем, что мне дорого." },
   { reason: "За твою улыбку, которая спасает", img: "https://picsum.photos/seed/r98/800/1000", text: "В самые трудные дни она возвращает меня к жизни." },
-  { reason: "За твою заботу обо мне каждый день", img: "https://picsum.photos/seed/r99/800/1000", text: "Ты делаешь"}
+  { reason: "За твою заботу обо мне каждый день", img: "https://picsum.photos/seed/r99/800/1000", text: "Ты делаешь меня счастливее." },
+  { reason: "За то, что ты — это ты", img: "https://picsum.photos/seed/r100/800/1000", text: "Такого(ой), как ты, больше нет." },
+  { reason: "За то, что ты выбрал(а) меня", img: "https://picsum.photos/seed/r101/800/1000", text: "И это лучший выбор в моей жизни." }
 ];
 
 /* =========================================================
-   ДАЛЬШЕ — ЛОГИКА (не трогаем)
+   ЛОГИКА КАРТОЧЕК И МОДАЛКИ
    ========================================================= */
 const TOTAL = DATA.length;
 let currentIndex = 0;
@@ -564,7 +797,7 @@ function buildGrid() {
       <div class="card__glare"></div>
       <div class="card__body">
         <div class="card__num">Причина №${i + 1}</div>
-        <div class="card__title">${d.reason}</div>
+        <div class="card__title"><span>${d.reason}</span></div>
       </div>
     `;
     card.addEventListener('click', () => openModal(i));
@@ -688,6 +921,231 @@ modalContent.addEventListener('touchend', e => {
   if (Math.abs(dx) > 50) dx < 0 ? next() : prev();
 }, { passive: true });
 
+/* =========================================================
+   АНИМИРОВАННОЕ СЕРДЦЕ ИЗ ЧАСТИЦ
+   ========================================================= */
+function createHeartField(canvas, options = {}) {
+  const ctx = canvas.getContext('2d');
+  const opts = Object.assign({
+    count: 600,
+    size: 1.8,
+    hueBase: 330,
+    speed: 1,
+  }, options);
+
+  let W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+  let particles = [];
+  let t = 0;
+  let rafId = null;
+
+  function heartPoint(angle, scale) {
+    const x = 16 * Math.pow(Math.sin(angle), 3);
+    const y = -(13 * Math.cos(angle) - 5 * Math.cos(2 * angle)
+            - 2 * Math.cos(3 * angle) - Math.cos(4 * angle));
+    return { x: x * scale, y: y * scale };
+  }
+
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    W = rect.width;
+    H = rect.height;
+    canvas.width  = W * dpr;
+    canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    buildParticles();
+  }
+
+  function buildParticles() {
+    const scale = Math.min(W, H) / 42;
+    particles = [];
+    for (let i = 0; i < opts.count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const p = heartPoint(angle, scale);
+      const jitter = (Math.random() - 0.5) * scale * 0.9;
+      particles.push({
+        bx: W / 2 + p.x + jitter,
+        by: H / 2 + p.y + jitter * 0.6,
+        phase: Math.random() * Math.PI * 2,
+        amp: 2 + Math.random() * 5,
+        speed: 0.6 + Math.random() * 0.9,
+        size: opts.size * (0.6 + Math.random() * 0.8),
+        hue: opts.hueBase + (Math.random() - 0.5) * 40,
+      });
+    }
+  }
+
+  function tick() {
+    if (!W || !H) { rafId = requestAnimationFrame(tick); return; }
+
+    ctx.clearRect(0, 0, W, H);
+
+    const pulse = 1 + Math.sin(t * opts.speed * 1.6) * 0.035;
+    const cx = W / 2, cy = H / 2;
+
+    for (const p of particles) {
+      let x = cx + (p.bx - cx) * pulse;
+      let y = cy + (p.by - cy) * pulse;
+
+      x += Math.cos(t * p.speed + p.phase) * p.amp;
+      y += Math.sin(t * p.speed + p.phase) * p.amp;
+
+      const alpha = 0.35 + Math.abs(Math.sin(t * p.speed + p.phase)) * 0.55;
+      const hue   = p.hue + Math.sin(t * 0.7 + p.phase) * 12;
+
+      ctx.beginPath();
+      ctx.arc(x, y, p.size * 2.6, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${hue}, 85%, 65%, ${alpha * 0.14})`;
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(x, y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${hue}, 90%, 72%, ${alpha})`;
+      ctx.fill();
+    }
+
+    t += 0.016;
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function start() {
+    if (rafId) return;
+    resize();
+    window.addEventListener('resize', resize);
+    tick();
+  }
+
+  function stop() {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+    window.removeEventListener('resize', resize);
+  }
+
+  return { start, stop };
+}
+
+/* =========================================================
+   ЭКРАНЫ: прелоадер → логин → прелоадер → главная
+   ========================================================= */
+
+// ⚠️ НАСТРОЙКИ ВХОДА
+const ALLOWED_LOGINS = ['Китя', 'Киса', 'Солнц', 'Солнце', 'Любимая', 'Котен', 'Принцесса', 'Самая Лучшаяho inTheWorld', 'Кис', 'Утя'];
+const PASSWORD       = ["143", "228"];
+
+const preStart   = document.getElementById('preloaderStart');
+const preAfter   = document.getElementById('preloaderAfter');
+const loginScr   = document.getElementById('loginScreen');
+const mainScr    = document.getElementById('mainContent');
+const loginForm  = document.getElementById('loginForm');
+const loginUser  = document.getElementById('loginUser');
+const loginPass  = document.getElementById('loginPass');
+const loginErr   = document.getElementById('loginError');
+
+const bgMusic     = document.getElementById('bgMusic');
+const soundToggle = document.getElementById('soundToggle');
+
+// Пока идёт стартовый прелоадер — блокируем скролл
+document.body.style.overflow = 'hidden';
+
+/* 1. Стартовый прелоадер */
+const heartStart = createHeartField(document.getElementById('preCanvasStart'), {
+  count: 350, size: 1.6
+});
+heartStart.start();
+
+setTimeout(() => {
+  heartStart.stop();
+  preStart.classList.add('hidden');
+
+  /* 2. Экран входа с сердцем на фоне */
+  const heartLogin = createHeartField(document.getElementById('preCanvasLogin'), {
+    count: 900, size: 1.8, speed: 1.1
+  });
+  heartLogin.start();
+  loginScr.classList.remove('hidden');
+  loginUser.focus();
+
+  /* 3. Обработка формы */
+  loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    loginErr.classList.remove('show');
+    loginErr.textContent = '';
+
+    const user = loginUser.value.trim().toLowerCase();
+    const pass = loginPass.value;
+
+    const userOk = ALLOWED_LOGINS.some(l => l.toLowerCase() === user);
+    const passOk = PASSWORD.includes(pass);
+
+    if (!userOk) {
+      loginErr.textContent = 'Такого логина нет';
+      loginErr.classList.add('show');
+      return;
+    }
+    if (!passOk) {
+      loginErr.textContent = '143 или 228 — вот правильный пароль';
+      loginErr.classList.add('show');
+      return;
+    }
+
+    // ===== УСПЕХ =====
+    heartLogin.stop();
+    loginScr.classList.add('hidden');
+
+    // Запуск музыки (пользовательский жест = разрешено)
+    bgMusic.volume = 0;
+    bgMusic.play().then(() => {
+      let v = 0;
+      const fade = setInterval(() => {
+        v += 0.025;
+        if (v >= 0.5) { v = 0.5; clearInterval(fade); }
+        bgMusic.volume = v;
+      }, 100);
+    }).catch(err => console.warn('Музыка:', err));
+
+    // Показ кнопки звука
+    soundToggle.classList.add('visible');
+    soundToggle.textContent = '🔊';
+    soundToggle.classList.remove('muted');
+    soundToggle.onclick = () => {
+      if (bgMusic.paused) {
+        bgMusic.play();
+        soundToggle.textContent = '🔊';
+        soundToggle.classList.remove('muted');
+      } else {
+        bgMusic.pause();
+        soundToggle.textContent = '🔇';
+        soundToggle.classList.add('muted');
+      }
+    };
+
+    /* 4. Прелоадер после входа */
+    const heartAfter = createHeartField(document.getElementById('preCanvasAfter'), {
+      count: 400, size: 1.7
+    });
+    preAfter.classList.remove('hidden');
+    heartAfter.start();
+
+    setTimeout(() => {
+      heartAfter.stop();
+      preAfter.classList.add('hidden');
+
+      /* 5. Показываем главную */
+      mainScr.classList.add('visible');
+      document.body.style.overflow = '';
+    }, 1600);
+  });
+}, 1800);
+
+/* Esc на логине — скрыть ошибку */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !loginScr.classList.contains('hidden')) {
+    loginErr.classList.remove('show');
+  }
+});
+
+/* =========================================================
+   ЗАПУСК СЕТКИ
+   ========================================================= */
 buildGrid();
 document.querySelectorAll('.card').forEach(bindCardTilt);
 </script>
