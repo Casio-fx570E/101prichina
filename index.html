@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>101 карточка — zoom + 3D везде</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #f4f5f7;
+    color: #1a1a2e;
+    padding: 24px;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 24px;
+    font-size: 1.6rem;
+  }
+
+  /* ================= Сетка ================= */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+    perspective: 1000px;      /* 3D-сцена для карточек */
+  }
+
+  .card {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    aspect-ratio: 4 / 5;
+    background: #ddd;
+    box-shadow: 0 2px 10px rgba(0,0,0,.12);
+    transform-origin: center center;
+    will-change: transform;
+    z-index: 1;
+
+    /* Плавность: зум/наклон */
+    transition:
+      transform .25s cubic-bezier(.2,.7,.3,1),
+      box-shadow .25s ease,
+      z-index 0s;
+  }
+
+  /* При наведении карточка поверх остальных и с более сильной тенью.
+     Сам transform (scale + rotate) выставляется из JS. */
+  .card.is-hover {
+    z-index: 50;
+    box-shadow: 0 30px 70px rgba(0,0,0,.45);
+  }
+
+  .card__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: filter .25s ease;
+    pointer-events: none;     /* чтобы mousemove не «спотыкался» о картинку */
+  }
+
+  .card.is-hover .card__img { filter: brightness(1.06); }
+
+  .card__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(0,0,0,.75) 0%,
+      rgba(0,0,0,.25) 45%,
+      rgba(0,0,0,0) 70%
+    );
+    pointer-events: none;
+  }
+
+  .card__body {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 12px;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    pointer-events: none;
+    /* выносим текст вперёд по Z — при наклоне будет параллакс */
+    transform: translateZ(20px);
+  }
+
+  .card__num {
+    font-size: .8rem;
+    font-weight: 700;
+    opacity: .85;
+  }
+
+  .card__title {
+    font-size: .95rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* Блик на карточке в сетке */
+  .card__glare {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    opacity: 0;
+    transition: opacity .2s ease;
+    mix-blend-mode: screen;
+    background: radial-gradient(
+      circle at var(--gx, 50%) var(--gy, 50%),
+      rgba(255,255,255,.45) 0%,
+      rgba(255,255,255,.1) 25%,
+      rgba(255,255,255,0) 55%
+    );
+  }
+
+  .card.is-hover .card__glare { opacity: 1; }
+
+  /* ================= Модальное окно ================= */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.78);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+    perspective: 1400px;
+  }
+
+  .modal.open { display: flex; }
+
+  .modal__content {
+    position: relative;
+    background: #111;
+    border-radius: 18px;
+    width: 100%;
+    max-width: 560px;
+    overflow: hidden;
+    touch-action: pan-y;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6);
+    transition: transform .35s cubic-bezier(.2,.7,.3,1);
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  .modal.open .modal__content {
+    animation: pop .25s ease;
+  }
+
+  @keyframes pop {
+    from { opacity: 0; transform: scale(.9); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .modal__glare {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 4;
+    opacity: 0;
+    transition: opacity .25s ease;
+    mix-blend-mode: screen;
+    background: radial-gradient(
+      circle at var(--gx, 50%) var(--gy, 50%),
+      rgba(255,255,255,.35) 0%,
+      rgba(255,255,255,.08) 25%,
+      rgba(255,255,255,0) 55%
+    );
+  }
+
+  .modal__content:hover .modal__glare { opacity: 1; }
+
+  .modal__photo {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: #222;
+  }
+
+  .modal__img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .modal__photo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      to top,
+      rgba(0,0,0,.8) 0%,
+      rgba(0,0,0,.15) 50%,
+      rgba(0,0,0,0) 100%
+    );
+  }
+
+  .modal__caption {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 20px;
+    color: #fff;
+    z-index: 2;
+    transform: translateZ(30px);
+  }
+
+  .modal__num {
+    font-size: .85rem;
+    font-weight: 700;
+    opacity: .85;
+    letter-spacing: .5px;
+  }
+
+  .modal__title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-top: 4px;
+    line-height: 1.2;
+  }
+
+  .modal__text {
+    font-size: .9rem;
+    color: #ddd;
+    margin-top: 6px;
+  }
+
+  .modal__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 6;
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: rgba(0,0,0,.55);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background .15s, transform .15s;
+    transform: translateZ(40px);
+  }
+
+  .modal__close:hover {
+    background: rgba(0,0,0,.85);
+    transform: translateZ(40px) scale(1.08);
+  }
+
+  .modal__nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    background: #1a1a1a;
+    transform: translateZ(10px);
+  }
+
+  .nav-btn {
+    border: none;
+    background: #4f46e5;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, opacity .15s;
+    white-space: nowrap;
+  }
+
+  .nav-btn:hover:not(:disabled) { background: #4338ca; }
+  .nav-btn:disabled { opacity: .35; cursor: default; }
+
+  .modal__counter {
+    font-size: .85rem;
+    color: #bbb;
+    font-weight: 600;
+  }
+
+  /* ================= Мобильные ================= */
+  @media (max-width: 480px) {
+    body { padding: 12px; }
+    .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .modal__title { font-size: 1.2rem; }
+    .nav-btn { padding: 9px 14px; font-size: .85rem; }
+    .modal__caption { padding: 16px; transform: none; }
+  }
+
+  /* Для тач-устройств отключаем 3D/зум у карточек */
+  @media (hover: none) {
+    .card.is-hover { z-index: 1; box-shadow: 0 2px 10px rgba(0,0,0,.12); }
+  }
+</style>
+</head>
+<body>
+
+<h1>101 карточка — zoom + 3D</h1>
+<div class="grid" id="grid"></div>
+
+<!-- Модальное окно -->
+<div class="modal" id="modal">
+  <div class="modal__content" id="modalContent">
+    <div class="modal__glare" id="modalGlare"></div>
+    <button class="modal__close" id="closeBtn" aria-label="Закрыть">✕</button>
+
+    <div class="modal__photo">
+      <img class="modal__img" id="modalImg" alt="">
+      <div class="modal__caption">
+        <div class="modal__num" id="modalNum"></div>
+        <div class="modal__title" id="modalTitle"></div>
+        <div class="modal__text" id="modalText"></div>
+      </div>
+    </div>
+
+    <div class="modal__nav">
+      <button class="nav-btn" id="prevBtn">← Назад</button>
+      <span class="modal__counter" id="modalCounter"></span>
+      <button class="nav-btn" id="nextBtn">Вперёд →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const TOTAL = 101;
+  let currentIndex = 0;
+
+  const grid         = document.getElementById('grid');
+  const modal        = document.getElementById('modal');
+  const modalContent = document.getElementById('modalContent');
+  const modalGlare   = document.getElementById('modalGlare');
+  const modalImg     = document.getElementById('modalImg');
+  const modalNum     = document.getElementById('modalNum');
+  const modalTitle   = document.getElementById('modalTitle');
+  const modalText    = document.getElementById('modalText');
+  const modalCounter = document.getElementById('modalCounter');
+  const prevBtn      = document.getElementById('prevBtn');
+  const nextBtn      = document.getElementById('nextBtn');
+  const closeBtn     = document.getElementById('closeBtn');
+
+  /* ============ Данные ============ */
+  const PHOTOS = [
+    "https://picsum.photos/id/1015/800/1000",
+    "https://picsum.photos/id/1016/800/1000",
+    "https://picsum.photos/id/1018/800/1000",
+  ];
+  const photoFor = i => PHOTOS[i] || `https://picsum.photos/seed/card${i}/800/1000`;
+  const getCardData = i => ({
+    num: i + 1,
+    title: `Карточка №${i + 1}`,
+    text: `Описание карточки номер ${i + 1}.`,
+    img: photoFor(i)
+  });
+
+  /* ============ Сетка ============ */
+  function buildGrid() {
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < TOTAL; i++) {
+      const d = getCardData(i);
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.index = i;
+      card.innerHTML = `
+        <img class="card__img" src="${d.img}" alt="${d.title}" loading="lazy" decoding="async">
+        <div class="card__overlay"></div>
+        <div class="card__glare"></div>
+        <div class="card__body">
+          <div class="card__num">№${d.num}</div>
+          <div class="card__title">${d.title}</div>
+        </div>
+      `;
+      card.addEventListener('click', () => openModal(i));
+      fragment.appendChild(card);
+    }
+    grid.appendChild(fragment);
+  }
+
+  /* =====================================================
+     3D-НАКЛОН НА КАРТОЧКАХ СЕТКИ
+     ===================================================== */
+  const HOVER_SCALE = 2.0;    // зум при наведении
+  const TILT_CARD   = 12;     // макс. угол наклона карточки, °
+
+  // Навешиваем обработчики на все карточки (делегирование не подходит,
+  // т.к. для наклона нужны индивидуальные координаты)
+  function bindCardTilt(card) {
+    const glare = card.querySelector('.card__glare');
+
+    card.addEventListener('mouseenter', () => {
+      card.classList.add('is-hover');
+      // включаем will-change, чтобы анимация была супер-плавной
+      card.style.transition = 'transform .15s cubic-bezier(.2,.7,.3,1), box-shadow .25s ease';
+    });
+
+    card.addEventListener('mousemove', e => {
+      const rect = card.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width;   // 0..1
+      const py = (e.clientY - rect.top)  / rect.height;  // 0..1
+
+      // Мышь справа -> rotateY отрицательный; мышь сверху -> rotateX положительный
+      const rotateY = (0.5 - px) * TILT_CARD * 2;
+      const rotateX = (py - 0.5) * TILT_CARD * 2;
+
+      // ВАЖНО: scale и rotate в одном transform — карточка зумится и наклоняется
+      card.style.transform =
+        `scale(${HOVER_SCALE}) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+
+      // Блик ездит за мышью
+      glare.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+      glare.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.classList.remove('is-hover');
+      // Плавно возвращаем к исходному состоянию с той же кривой
+      card.style.transition = 'transform .3s cubic-bezier(.2,.7,.3,1), box-shadow .25s ease';
+      card.style.transform = 'scale(1) rotateX(0deg) rotateY(0deg)';
+      glare.style.setProperty('--gx', '50%');
+      glare.style.setProperty('--gy', '50%');
+    });
+  }
+
+  /* ============ Модалка ============ */
+  function openModal(index) {
+    currentIndex = index;
+    renderModal();
+    resetTilt();
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function renderModal() {
+    const d = getCardData(currentIndex);
+    modalImg.src = d.img;
+    modalImg.alt = d.title;
+    modalNum.textContent    = `№${d.num}`;
+    modalTitle.textContent  = d.title;
+    modalText.textContent   = d.text;
+    modalCounter.textContent= `${currentIndex + 1} / ${TOTAL}`;
+    prevBtn.disabled = currentIndex === 0;
+    nextBtn.disabled = currentIndex === TOTAL - 1;
+  }
+
+  function closeModal() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+    resetTilt();
+  }
+
+  function next() { if (currentIndex < TOTAL - 1) { currentIndex++; renderModal(); } }
+  function prev() { if (currentIndex > 0)        { currentIndex--; renderModal(); } }
+
+  /* ============ 3D TILT В МОДАЛКЕ ============ */
+  const MAX_TILT = 14;
+
+  function resetTilt() {
+    modalContent.style.transform = 'rotateX(0deg) rotateY(0deg)';
+    modalGlare.style.setProperty('--gx', '50%');
+    modalGlare.style.setProperty('--gy', '50%');
+  }
+
+  function handleModalTilt(e) {
+    if (!modal.classList.contains('open')) return;
+
+    const rect = modalContent.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top)  / rect.height;
+
+    if (px < -0.5 || px > 1.5 || py < -0.5 || py > 1.5) { resetTilt(); return; }
+
+    const rotateY = (0.5 - px) * MAX_TILT * 2;
+    const rotateX = (py - 0.5) * MAX_TILT * 2;
+
+    modalContent.style.transform =
+      `rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+
+    modalGlare.style.setProperty('--gx', (px * 100).toFixed(1) + '%');
+    modalGlare.style.setProperty('--gy', (py * 100).toFixed(1) + '%');
+  }
+
+  document.addEventListener('mousemove', handleModalTilt);
+  document.addEventListener('mouseleave', resetTilt);
+
+  /* ============ События ============ */
+  closeBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  nextBtn.addEventListener('click', next);
+  prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', e => {
+    if (!modal.classList.contains('open')) return;
+    if (e.key === 'Escape')     closeModal();
+    if (e.key === 'ArrowRight') next();
+    if (e.key === 'ArrowLeft')  prev();
+  });
+
+  /* ============ Свайпы (тач) ============ */
+  let touchStartX = 0;
+  modalContent.addEventListener('touchstart', e => {
+    touchStartX = e.changedTouches[0].clientX;
+  }, { passive: true });
+  modalContent.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) dx < 0 ? next() : prev();
+  }, { passive: true });
+
+  /* ============ Запуск ============ */
+  buildGrid();
+  document.querySelectorAll('.card').forEach(bindCardTilt);
+</script>
+</body>
+</html>
